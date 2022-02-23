@@ -12,6 +12,14 @@ class FritzScheduler(ad.ADBase):
     def initialize(self):
         self.adapi = self.get_ad_api()
 
+        # Run callback
+        #self.adapi.run_in(self.fritz_cb, 20)
+        self.adapi.run_minutely(self.fritz_cb, datetime.datetime.now())
+
+    #
+    # Fritz callback
+    #
+    def fritz_cb(self, kwargs):
         # DHT22
         self.dht22 = self.adapi.get_entity(self.args["dht22"], namespace="hass")
         self.dht22_state = self.dht22.get_state(attribute="state")
@@ -34,14 +42,6 @@ class FritzScheduler(ad.ADBase):
         daily_schedule = config['auto'][day]
         self.daily_schedule_list = daily_schedule.split('#')
 
-        # Run callback
-        #self.adapi.run_in(self.fritz_cb, 20)
-        self.adapi.run_minutely(self.fritz_cb, datetime.datetime.now())
-
-    #
-    # Fritz callback
-    #
-    def fritz_cb(self, kwargs):
         # Loop over schedule
         for i in self.daily_schedule_list:
             daily_schedule_time = i.split('-')
@@ -70,8 +70,10 @@ class FritzScheduler(ad.ADBase):
     def calc_temp(self, dht22_temp, fritz_temp, target):
         diff = float(dht22_temp) - float(target)
 
+        self.adapi.log(diff)
+
         # DHT22 temp higher than target => cool down
-        if (diff > 0):
+        if (diff >= 0):
             self.new_temp = target
 
         # DHT22 temp lower than target => heat
