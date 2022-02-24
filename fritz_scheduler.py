@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import appdaemon.plugins.hass.hassapi as hass
 import adbase as ad
 import configparser
@@ -68,6 +67,7 @@ class FritzScheduler(ad.ADBase):
                     # Set new temperature
                     self.set_temp()
 
+                    # Log to appdaemon.log
                     self.adapi.log('####################################################')
                     self.adapi.log('DHT22 sensor: ' + self.args["dht22"][self.counter])
                     self.adapi.log('Fritz sensor: ' + self.args["fritz"][self.counter])
@@ -75,6 +75,7 @@ class FritzScheduler(ad.ADBase):
                     self.adapi.log('Start: ' + start)
                     self.adapi.log('End: ' + end)
                     self.adapi.log('Target: ' + target)
+                    self.adapi.log('Diff: ' + str(self.diff))
                     self.adapi.log('DHT22 State: ' + str(self.dht22_state))
                     self.adapi.log('Fritz State: ' + str(self.fritz_state))
                     self.adapi.log('New Temperature: ' + str(self.new_temp))
@@ -84,17 +85,15 @@ class FritzScheduler(ad.ADBase):
     # Calculate new temperature
     #
     def calc_temp(self, dht22_temp, fritz_temp, target):
-        diff = float(dht22_temp) - float(target)
-
-        self.adapi.log(diff)
+        self.diff = float(dht22_temp) - float(target)
 
         # DHT22 temp higher than target => cool down
-        if (diff >= 0):
+        if (self.diff >= 0):
             self.new_temp = target
 
         # DHT22 temp lower than target => heat
         else:
-           self.new_temp = round(float(fritz_temp) - diff, 1)
+           self.new_temp = round(float(fritz_temp) - self.diff, 1)
 
     #
     # Set fritz target temp to new temp
