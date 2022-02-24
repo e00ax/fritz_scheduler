@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import appdaemon.plugins.hass.hassapi as hass
 import adbase as ad
 import configparser
@@ -8,7 +9,6 @@ import datetime
 # Fritz scheduler
 #
 class FritzScheduler(ad.ADBase):
-    
     def initialize(self):
         self.adapi = self.get_ad_api()
 
@@ -20,49 +20,65 @@ class FritzScheduler(ad.ADBase):
     # Fritz callback
     #
     def fritz_cb(self, kwargs):
-        # DHT22
-        self.dht22 = self.adapi.get_entity(self.args["dht22"], namespace="hass")
-        self.dht22_state = self.dht22.get_state(attribute="state")
+        """
+        Loop over all DHT22 sensors
 
-        # Fritz DECT 301
-        self.fritz = self.adapi.get_entity(self.args["fritz"], namespace="hass")
-        self.fritz_state = self.fritz.get_state(attribute="current_temperature")
+        Attach them with FRITZ DECT 30X and schedule.ini
 
-        # Read ini file
-        config = configparser.ConfigParser()
-        config.read('/config/appdaemon/apps/' + self.args["ini"])
+        Important:
+        Association is 1:1 (dht22/fritz/ini)
+        """
+        for i in range(len(self.args["dht22"])):
+            # Counter for use as indices
+            self.counter = i
 
-        # Format time object
-        self.today = date.today()
-        day = self.today.strftime("%a")
-        self.time = datetime.datetime.now().strftime("%H:%M:%S")
-        self.timestamp = datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")
+            # DHT22
+            self.dht22 = self.adapi.get_entity(self.args["dht22"][i], namespace="hass")
+            self.dht22_state = self.dht22.get_state(attribute="state")
 
-        # Split time for current date
-        daily_schedule = config['auto'][day]
-        self.daily_schedule_list = daily_schedule.split('#')
+            # Fritz DECT 301
+            self.fritz = self.adapi.get_entity(self.args["fritz"][i], namespace="hass")
+            self.fritz_state = self.fritz.get_state(attribute="current_temperature")
 
-        # Loop over schedule
-        for i in self.daily_schedule_list:
-            daily_schedule_time = i.split('-')
-            start = daily_schedule_time[0]
-            end = daily_schedule_time[1]
-            target = daily_schedule_time[2]
+            # Read ini file
+            config = configparser.ConfigParser()
+            config.read('/config/appdaemon/apps/' + self.args["ini"][i])
 
-            if (self.is_hour_between(start, end)):
-                # Calc new temperature
-                self.calc_temp(self.dht22_state, self.fritz_state, target)
+            # Format time object
+            self.today = date.today()
+            day = self.today.strftime("%a")
+            self.time = datetime.datetime.now().strftime("%H:%M:%S")
+            self.timestamp = datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")
 
-                # Set new temperature
-                self.set_temp()
+            # Split time for current date
+            daily_schedule = config['auto'][day]
+            self.daily_schedule_list = daily_schedule.split('#')
 
-                self.adapi.log('####################################################')
-                self.adapi.log('Timestamp: ' + str(self.timestamp))
-                self.adapi.log('Start: ' + start)
-                self.adapi.log('End: ' + end)
-                self.adapi.log('Target: ' + target)
-                self.adapi.log('New Temperature: ' + str(self.new_temp))
-                self.adapi.log('####################################################')
+            # Loop over schedule
+            for i in self.daily_schedule_list:
+                daily_schedule_time = i.split('-')
+                start = daily_schedule_time[0]
+                end = daily_schedule_time[1]
+                target = daily_schedule_time[2]
+
+                if (self.is_hour_between(start, end)):
+                    # Calc new temperature
+                    self.calc_temp(self.dht22_state, self.fritz_state, target)
+
+                    # Set new temperature
+                    self.set_temp()
+
+                    self.adapi.log('####################################################')
+                    self.adapi.log('DHT22 sensor: ' + self.args["dht22"][self.counter])
+                    self.adapi.log('Fritz sensor: ' + self.args["fritz"][self.counter])
+                    self.adapi.log('Timestamp: ' + str(self.timestamp))
+                    self.adapi.log('Start: ' + start)
+                    self.adapi.log('End: ' + end)
+                    self.adapi.log('Target: ' + target)
+                    self.adapi.log('DHT22 State: ' + str(self.dht22_state))
+                    self.adapi.log('Fritz State: ' + str(self.fritz_state))
+                    self.adapi.log('New Temperature: ' + str(self.new_temp))
+                    self.adapi.log('####################################################')
 
     #
     # Calculate new temperature

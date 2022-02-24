@@ -1,11 +1,11 @@
 ---
-hello_world:
-  module: hello
-  class: HelloWorld
-
 fritz_scheduler:
   module: fritz_scheduler
   class: FritzScheduler
-  dht22: sensor.war_room_temperature
-  fritz: climate.fritz_dect_301_1
-  ini: schedule.ini
+  dht22: 
+    - sensor.war_room_temperature
+  fritz: 
+    - climate.fritz_dect_301_1
+  ini: 
+    - schedule.ini
+  unit: C
