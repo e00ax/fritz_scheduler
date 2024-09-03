@@ -1,0 +1,44 @@
+esphome:
+  name: esphome-web-60e788
+  friendly_name: dht22
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "4CNhOTbRptGN21xaPUCoHVX/H2y3+hb7L3qJ07bzIBo="
+
+ota:
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esphome-Web-60E788"
+    password: "MKuZYQ20znUx"
+
+captive_portal:
+
+sensor:
+  - platform: dht
+    pin: GPIO02
+    temperature:
+      name: "War Room Temperature"
+      filters:
+        - calibrate_linear:
+            - 0.0 -> 0.0
+            - 25.0 -> 25.0
+    humidity:
+      name: "War Room Humidity"
+    update_interval: 5s
+    model: DHT22

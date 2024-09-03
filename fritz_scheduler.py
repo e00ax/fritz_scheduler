@@ -40,8 +40,18 @@ class FritzScheduler(ad.ADBase):
             self.fritz_state = self.fritz.get_state(attribute="current_temperature")
 
             # Read ini file
-            config = configparser.ConfigParser()
-            config.read('/config/appdaemon/apps/' + self.args["ini"][i])
+            #config = configparser.ConfigParser()
+            #config.read('schedule.ini')
+
+            schedule = {
+                "Mon":"00:00-07:00-10#07:01-16:00-19#16:01-23:59-19",
+                "Tue":"00:00-07:00-10#07:01-16:00-19#16:01-23:59-19",
+                "Wed":"00:00-07:00-10#07:01-16:00-19#16:01-23:59-19",
+                "Thu":"00:00-07:00-10#07:01-16:00-19#16:01-23:59-19",
+                "Fri":"00:00-07:00-10#07:01-16:00-19#16:01-23:59-19",
+                "Sat":"00:00-09:00-10#08:01-23:59-19",
+                "Sun":"00:00-09:00-10#09:01-23:59-19"
+            }
 
             # Format time object
             self.today = date.today()
@@ -50,7 +60,7 @@ class FritzScheduler(ad.ADBase):
             self.timestamp = datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")
 
             # Split time for current date
-            daily_schedule = config['auto'][day]
+            daily_schedule = schedule[day]
             self.daily_schedule_list = daily_schedule.split('#')
 
             # Loop over schedule
